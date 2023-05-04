@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-import winsound
+import pygame
 
 class Chess():
     def __init__(self):
@@ -40,11 +40,11 @@ class Chess():
         self.current_piece_id = None
         self.board = {}
         self.whites_move = True
+        self.is_en_passanted = False
         self.INVALID_MOVE_MSG = "Invalid move!"
         self.original_square = ()
         self.moves = []
         
-
 
     def createBoard(self):
         for i in range(8):
@@ -122,10 +122,7 @@ class Chess():
         # [(from coordintates), (to cooridnates), piece]
         self.moves_made = []
     
-    def checkValidMove(self):
-        pass
 
-    
     def on_click(self, event):
         x, y = event.x, event.y
         col, row = x // self.square_size, y // self.square_size
@@ -165,22 +162,76 @@ class Chess():
         overlap_tags = [self.canvas.itemcget(id, "tags").split(" ")[0] for id in overlap_ids]
 
         # Remove the rest of the overlapping objects
+        piece_removed = False
         for tag, id in zip(overlap_tags, overlap_ids):
             if tag == "dark_square" or tag == "light_square":
                 continue
             else:
                 self.canvas.delete(id)
+                piece_removed = True
+        
+        if piece_removed or self.is_en_passanted:
+            pygame.mixer.init()
+            pygame.mixer.music.load('C:/Users/harge/WebDevPractice/chess_game/sounds/capture.mp3')
+            pygame.mixer.music.play()
+        else:
+            pygame.mixer.init()
+            pygame.mixer.music.load('C:/Users/harge/WebDevPractice/chess_game/sounds/move-self.mp3')
+            pygame.mixer.music.play()
+
 
     # Check if it is a check, if it is a stalemate, or checkmate, or draw
     def check_stale_mate_draw(self):
         pass
 
+    def king_in_check(self, new_row, new_col):
+        pass
+
+    def can_en_passant_capture(self, old_row, old_col, new_row, new_col):
+        if self.whites_move:
+            if old_row == 3 and new_row == 2 and (abs(new_col - old_col) == 1):
+                last_move = self.moves_made[-1][2]
+                original_sqaure = self.moves_made[-1][0]
+                new_square = self.moves_made[-1][1]
+                if "pawn" in last_move:
+                    count = 0
+                    for _, _, piece in self.moves_made:
+                        if last_move == piece:
+                            count += 1
+                    if count == 1:
+                        if original_sqaure[0] == 1 and new_square[0] == 3 and abs(new_square[1] - old_col) == 1:
+                            id = self.canvas.find_withtag(last_move)
+                            self.canvas.delete(id)
+                            self.board[new_square] = "Empty"
+                            self.is_en_passanted = True
+                            return True    
+        else:
+            if old_row == 4 and new_row == 5 and (abs(new_col - old_col) == 1):
+                last_move = self.moves_made[-1][2]
+                original_sqaure = self.moves_made[-1][0]
+                new_square = self.moves_made[-1][1]
+                if "pawn" in last_move:
+                    count = 0
+                    for _, _, piece in self.moves_made:
+                        if last_move == piece:
+                            count += 1
+                    if count == 1:
+                        if original_sqaure[0] == 6 and new_square[0] == 4 and abs(new_square[1] - old_col) == 1:
+                            id = self.canvas.find_withtag(last_move)
+                            self.canvas.delete(id)
+                            self.board[new_square] = "Empty"
+                            self.is_en_passanted = True
+                            return True
+
+        return False                    
+        
     # pawns are 0-7
     def check_valid_pawn_move(self, old_row, old_col, new_row, new_col, pawn_num):
         # Pawn on original square for white
         if self.whites_move:
             # pawn jumping one or two squares first move
-            if old_row == 6 and new_col == pawn_num and (old_row-new_row == 1 or old_row-new_row == 2) and self.board[new_row, new_col] == "Empty":
+            if old_row == 6 and new_col == pawn_num and (old_row-new_row == 1 or old_row-new_row == 2) and self.board[new_row, new_col] == "Empty"\
+                and self.board[(5, new_col)] == "Empty":
                 return True
             # Normal pawn move forward
             if old_row != 6 and new_col == old_col and old_row-new_row == 1 and self.board[(new_row, new_col)] == "Empty":
@@ -192,9 +243,12 @@ class Chess():
             if old_row == 6 and self.board[(new_row, new_col)][0] == 'b' and self.board[(new_row, new_col)] != "b_king" and \
                 (new_col - old_col == 1 or new_col - old_col == -1) and old_row - new_row == 1:
                 return True
+            if self.can_en_passant_capture(old_row, old_col, new_row, new_col):
+                return True
         else:
             # pawn jumping one or two squares first move
-            if old_row == 1 and new_col == pawn_num and (new_row - old_row == 1 or new_row -old_row == 2) and self.board[new_row, new_col] == "Empty":
+            if old_row == 1 and new_col == pawn_num and (new_row - old_row == 1 or new_row -old_row == 2) and self.board[new_row, new_col] == "Empty"\
+                and self.board[(2, new_col)] == "Empty":
                 return True
             # Normal pawn move forward
             if old_row != 1 and new_col == old_col and new_row-old_row == 1 and self.board[(new_row, new_col)] == "Empty":
@@ -205,6 +259,8 @@ class Chess():
                 return True
             if old_row == 1 and self.board[(new_row, new_col)][0] == 'w' and self.board[(new_row, new_col)] != "w_king" and \
                 (old_col - new_col == 1 or old_col - new_col == -1) and new_row - old_row == 1:
+                return True
+            if self.can_en_passant_capture(old_row, old_col, new_row, new_col):
                 return True
         return False
 
@@ -242,13 +298,46 @@ class Chess():
         return True
     
     def check_valid_rook_move(self, old_row, old_col, new_row, new_col):
-        pass
+        # check if moving in a straight line either horizontally or vertically
+        if old_row != new_row and old_col != new_col:
+            return False
+        if self.board[(new_row, new_col)] == "w_king" or self.board[(new_row, new_col)] == "b_king":
+            return False
+        # check for pieces blocking the rook's path in the direction of movement
+        if old_row == new_row:  # horizontal movement
+            start = min(old_col, new_col) + 1
+            end = max(old_col, new_col)
+            for col in range(start, end):
+                if self.board[(old_row, col)] != "Empty":
+                    return False
+        else:  # vertical movement
+            start = min(old_row, new_row) + 1
+            end = max(old_row, new_row)
+            for row in range(start, end):
+                if self.board[(row, old_col)] != "Empty":
+                    return False
+
+        # valid move if no pieces are blocking rook's path
+        return True
 
     def check_valid_queen_move(self, old_row, old_col, new_row, new_col):
-        pass
+        if self.check_valid_rook_move(old_row, old_col, new_row, new_col) or self.check_valid_bishop_move(old_row, old_col, new_row, new_col):
+            return True
+        return False
 
     def check_vald_king_move(self, old_row, old_col, new_row, new_col):
-        pass
+        #Up and Down
+        if "king" in self.board[(new_row, new_col)]:
+            return False
+        if (abs(old_row - new_row) == 1) and old_col == new_col and not self.king_in_check(new_row, new_col):
+            return True
+        #Side to Side
+        if (abs(old_col - new_col) == 1) and old_row == new_row and not self.king_in_check(new_row, new_col):
+            return True
+        #Vertical
+        if(abs(old_col - new_col) == 1) and abs(old_row - new_row) == 1 and not self.king_in_check(new_row, new_col):
+            return True
+        return False
 
     def check_valid_move(self, old_row, old_col, new_row, new_col, piece):
         square_moved_to = self.board[(new_row, new_col)]
@@ -262,6 +351,12 @@ class Chess():
             return self.check_valid_knight_move(old_row, old_col, new_row, new_col)
         if "bishop" in piece:
             return self.check_valid_bishop_move(old_row, old_col, new_row, new_col)
+        if "rook" in piece:
+            return self.check_valid_rook_move(old_row, old_col, new_row, new_col)
+        if "queen" in piece:
+            return self.check_valid_queen_move(old_row, old_col, new_row, new_col)
+        if "king" in piece:
+            return self.check_vald_king_move(old_row, old_col, new_row, new_col)
         return True
 
 
@@ -289,6 +384,7 @@ class Chess():
             self.board[(row, col)] = self.current_piece
             self.moves_made.append([self.original_square, (row, col), self.current_piece])
             self.capture_piece(row, col)
+            self.is_en_passanted = False
             self.check_stale_mate_draw()
             print(self.moves_made)
             self.whites_move = not self.whites_move   
@@ -306,7 +402,9 @@ class Chess():
             self.board[(row, col)] = self.current_piece
             self.moves_made.append([self.original_square, (row, col), self.current_piece])
             self.capture_piece(row, col)
+            self.is_en_passanted = False
             self.check_stale_mate_draw()
+            print(self.moves_made)
             self.whites_move = True
  
     def play(self):
