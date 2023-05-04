@@ -43,9 +43,10 @@ class Chess():
         self.is_en_passanted = False
         self.INVALID_MOVE_MSG = "Invalid move!"
         self.original_square = ()
+        self.white_in_check = False
+        self.black_in_check = False
         self.moves = []
         
-
     def createBoard(self):
         for i in range(8):
             for j in range(8):
@@ -122,7 +123,6 @@ class Chess():
         # [(from coordintates), (to cooridnates), piece]
         self.moves_made = []
     
-
     def on_click(self, event):
         x, y = event.x, event.y
         col, row = x // self.square_size, y // self.square_size
@@ -139,7 +139,6 @@ class Chess():
         if not self.whites_move and piece[0] == 'w' or self.current_piece == "light_square" or self.current_piece == "dark_square":
             print(self.INVALID_MOVE_MSG)
             return
-
 
     def on_drag(self, event):
         # Find the square that the mouse is dragging to
@@ -179,12 +178,102 @@ class Chess():
             pygame.mixer.music.load('C:/Users/harge/WebDevPractice/chess_game/sounds/move-self.mp3')
             pygame.mixer.music.play()
 
+    def get_king_pos(self, color):
+        if color == "white":
+            for key in self.board:
+                if "w_king" == self.board[key]:
+                    return key
+        else:
+            for key in self.board:
+                if "b_king" == self.board[key]:
+                    return key
 
-    # Check if it is a check, if it is a stalemate, or checkmate, or draw
     def check_stale_mate_draw(self):
         pass
 
+    ## SEE IF KING IS IN CHECK, GET VALID MOVES
+
     def king_in_check(self, new_row, new_col):
+        if self.whites_move:
+            king_row, king_col = self.get_king_pos("black")
+            # BISHOP CHECK
+            # Iterate through the diagonal that starts at (row, col) and goes up and to the right
+            for i in range(1, min(new_row, 7 - new_col) + 1):
+                curr_piece = self.board[(new_row - i, new_col + i)]
+                if new_row-i == king_row and new_col+i == king_col:
+                    self.black_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes up and to the left
+            for i in range(1, min(new_row, new_col) + 1):
+                curr_piece = self.board[(new_row - i, new_col - i)]
+                if new_row-i == king_row and new_col-i == king_col:
+                    self.black_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes down and to the right
+            for i in range(1, min(7 - new_row, 7 - new_col) + 1):
+                curr_piece = self.board[(new_row + i, new_col + i)]
+                if new_row+i == king_row and new_col+i == king_col:
+                    self.black_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes down and to the left
+            for i in range(1, min(7 - new_row, new_col) + 1):
+                curr_piece = self.board[(new_row + i, new_col - i)]
+                if new_row+i == king_row and new_col-i == king_col:
+                    self.black_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+            return False
+        else:
+            king_row, king_col = self.get_king_pos("white")
+            # BISHOP CHECK
+            # Iterate through the diagonal that starts at (row, col) and goes up and to the right
+            for i in range(1, min(new_row, 7 - new_col) + 1):
+                curr_piece = self.board[(new_row - i, new_col + i)]
+                if new_row-i == king_row and new_col+i == king_col:
+                    self.white_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes up and to the left
+            for i in range(1, min(new_row, new_col) + 1):
+                curr_piece = self.board[(new_row - i, new_col - i)]
+                if new_row-i == king_row and new_col-i == king_col:
+                    self.white_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes down and to the right
+            for i in range(1, min(7 - new_row, 7 - new_col) + 1):
+                curr_piece = self.board[(new_row + i, new_col + i)]
+                if new_row+i == king_row and new_col+i == king_col:
+                    self.white_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+
+            # Iterate through the diagonal that starts at (row, col) and goes down and to the left
+            for i in range(1, min(7 - new_row, new_col) + 1):
+                curr_piece = self.board[(new_row + i, new_col - i)]
+                if new_row+i == king_row and new_col-i == king_col:
+                    self.white_in_check = True
+                    return True
+                if curr_piece != "Empty":
+                    break
+            return False
+
+    def get_valid_moves_in_check(self):
         pass
 
     def can_en_passant_capture(self, old_row, old_col, new_row, new_col):
@@ -224,8 +313,9 @@ class Chess():
                             return True
 
         return False                    
-        
-    # pawns are 0-7
+    
+    # GET VALID MOVES WHEN NOT IN CHECK
+
     def check_valid_pawn_move(self, old_row, old_col, new_row, new_col, pawn_num):
         # Pawn on original square for white
         if self.whites_move:
@@ -329,17 +419,23 @@ class Chess():
         #Up and Down
         if "king" in self.board[(new_row, new_col)]:
             return False
-        if (abs(old_row - new_row) == 1) and old_col == new_col and not self.king_in_check(new_row, new_col):
+        if (abs(old_row - new_row) == 1) and old_col == new_col:
             return True
         #Side to Side
-        if (abs(old_col - new_col) == 1) and old_row == new_row and not self.king_in_check(new_row, new_col):
+        if (abs(old_col - new_col) == 1) and old_row == new_row:
             return True
         #Vertical
-        if(abs(old_col - new_col) == 1) and abs(old_row - new_row) == 1 and not self.king_in_check(new_row, new_col):
+        if(abs(old_col - new_col) == 1) and abs(old_row - new_row) == 1:
             return True
         return False
 
+    # MAKE SURE A MOVE IS VALID SEEING IF YOUR IN CHECK ALSO
+
     def check_valid_move(self, old_row, old_col, new_row, new_col, piece):
+        if self.whites_move and self.white_in_check:
+            self.get_valid_moves_in_check()
+        if not self.whites_move and self.black_in_check:
+            self.get_valid_moves_in_check()
         square_moved_to = self.board[(new_row, new_col)]
         if self.whites_move and square_moved_to[0] == 'w':
             return False
@@ -379,6 +475,9 @@ class Chess():
                 self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
                 print(self.INVALID_MOVE_MSG)
                 return
+            if self.king_in_check(row, col):
+                print("Black is in check from a bishop!")
+            
             self.canvas.coords(self.current_piece_id, dest_x, dest_y)
             self.board[(old_row,old_col)] = "Empty"
             self.board[(row, col)] = self.current_piece
@@ -397,6 +496,8 @@ class Chess():
                 self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
                 print(self.INVALID_MOVE_MSG)
                 return
+            if self.king_in_check(row, col):
+                print("White is in check from a bishop!")
             self.canvas.coords(self.current_piece_id, dest_x, dest_y)
             self.board[(old_row,old_col)] = "Empty"
             self.board[(row, col)] = self.current_piece
