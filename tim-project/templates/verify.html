@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Login Page</title>
+    <link type="text/css" rel="stylesheet" href="../static/createstyle.css">
+    <script src= "https://fontawesome.com/kits/6d4a36eea1.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class ="container">
+    <div class ="form-box">
+        {% if error %}
+        <p><span style="color: red;" id="error">{{ error }}</span></p>
+        {% endif %}
+        {% if success %}
+        <p><span style="color:green;" id="success">{{ success | safe}}</span></p>
+        {% endif %}
+    </div>
+   </div>
+  <script>
+    // Update the error message if it exists
+    const errorElement = document.getElementById('error');
+    if (errorElement) {
+        const error = "{{ error }}";
+        errorElement.textContent = error;
+    }
+</script>
+</body>
+</html>

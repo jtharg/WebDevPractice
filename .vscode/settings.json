@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./tim-project/back-end"
+    ]
+}

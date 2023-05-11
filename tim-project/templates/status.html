@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Form Status</title>
+        <style>
+          label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+          }
+          .submission {
+            text-align: center;
+            margin: auto;
+            padding: 5px;
+            border: 1px solid blue;
+            width: 50%;
+            position: relative;
+          }
+          .btn-edit {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            
+            }
+            .btn-delete{
+            position: absolute;
+            top: 7px;
+            right: 5%;
+            text-align: center;
+            background-color: red;
+            border-radius: 2px;
+            }
+            .hidden{
+                display: none;
+            }
+        </style>
+        <!-- <link type="text/css" rel="stylesheet" href="../static/createstyle.css"> -->
+        <script src= "https://fontawesome.com/kits/6d4a36eea1.js" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-VYziSb6oYlEq+F31KlqJ2z5Xg7GzsIljed2BAxk0hFWd3lQItpzvkQIKFtze1x2NPy5v/G1bRpXrPdGdjPZbbQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        
+    </head>
+    <body>
+      <br></br>
+      <div style="margin: auto;">
+      <h1 style="text-align: center; color: blue;">My Event Forms Status</h1>
+      </div>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info">
+            {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}    
+      <br></br>
+      {% for form in forms %}
+      <div class="submission">
+        {% if form[7] == 'pending' or form[7] == 'redraft' %}
+        <a href="/editForm?form_id={{ form[0] }}" class="btn-edit"><i class="fa fa-gear fa-2x"></i></a>
+        {% endif %}
+        <form action="{{ url_for('deleteForm') }}" method="POST">
+            <input type="hidden" name="form_id" value="{{ form[0] }}">
+            <button class="btn-delete" href="#" style="color:white">Delete</button>
+        </form>
+          <h2>{{ form[2] }}</h2>
+          <p><strong>Event role:</strong> {{ form[1].capitalize() }} </p>
+          <p><strong>Submission Date:</strong> {{ form[9].strftime('%m/%d/%Y') }}</p>
+          <p><strong>Event Date:</strong> {{ form[3].strftime('%m/%d/%Y') }}</p>
+          {% if form[6] %}
+          <p><strong>Event Manager:</strong> {{ form[6] }}</p>
+          {% else %}
+          <p><strong>Event Manager:</strong> N/A </p>
+          {% endif %}
+          <p><strong>Event Location:</strong> {{ form[4] }}</p>
+          {% if form[5] %}
+          <p><strong>Additional Information:</strong> {{ form[5] }}</p>
+          {% else %}
+          <p><strong>Additional Information:</strong> N/A </p>
+          {% endif %}
+          <p><strong>Form Status:</strong> {{form[7]}}</p>
+      </div>
+      <br></br>
+    {% endfor %}
+    </body>
+</html>
+{% endblock %}

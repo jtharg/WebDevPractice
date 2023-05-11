@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Login Page</title>
+    <link type="text/css" rel="stylesheet" href="../static/createstyle.css">
+    <script src= "https://fontawesome.com/kits/6d4a36eea1.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class ="container">
+    <div class ="form-box">
+      <h1 id="title">Student Log in</h1>
+      <form method="post" action="/login">
+        {% if error %}
+        <p><span style="color: red;" id="error">{{ error }}</span></p>
+        {% endif %}
+          <div class = "input-field">
+            <i class= "fa-solid fa-envelope"></i>
+            <input type = "email" placeholder = "Mount Email" name = "email" id="email"><br></br>
+        </div>
+        <div class = "input-field">
+          <i class= "fa-solid fa-lock"></i>
+          <input type = "password" placeholder = "Password" name = "password"><br></br>
+          </div>
+          <input style="color: white; font-size: large; border-radius: 5%; width: 50%; background-color: blue;" type="submit" value="Log in">
+          <p> Don't have an account? <a href="/signup"> Click Here!</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    // Update the error message if it exists
+    const errorElement = document.getElementById('error');
+    if (errorElement) {
+        const error = "{{ error }}";
+        errorElement.textContent = error;
+    }
+</script>
+</body>
+</html>

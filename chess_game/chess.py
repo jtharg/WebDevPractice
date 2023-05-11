@@ -128,7 +128,6 @@ class Chess():
         col, row = x // self.square_size, y // self.square_size
         self.original_square = (row, col)
         # Move the image to the clicked square
-        print(row, col)
         piece_id = event.widget.find_closest(event.x, event.y)[0]
         piece = self.canvas.itemcget(piece_id, "tags").split(" ")[0]
         self.current_piece_id = piece_id
@@ -191,7 +190,7 @@ class Chess():
     def check_stale_mate_draw(self):
         pass
     
-    def king_in_check_bishop(self, new_row, new_col):
+    def king_in_check_bishop(self, new_row, new_col, king_row, king_col):
         if self.whites_move:
             king_row, king_col = self.get_king_pos("black")
             # BISHOP CHECK
@@ -271,23 +270,23 @@ class Chess():
                     break
             return False
     ## SEE IF KING IS IN CHECK, GET VALID MOVES
-    def king_in_check_pawn(self, new_row, new_col):
+    def king_in_check_pawn(self, new_row, new_col, king_row, king_col):
         if self.whites_move:
-            king_row, king_col = self.get_king_pos("black")
+            # king_row, king_col = self.get_king_pos("black")
             if new_row - king_row == 1 and abs(new_col - king_col) == 1:
                 self.black_in_check = True
                 return True
             return False
         else:
-            king_row, king_col = self.get_king_pos("white")
+            # king_row, king_col = self.get_king_pos("white")
             if king_row - new_row == 1 and abs(new_col - king_col) == 1:
                 self.white_in_check = True
                 return True
             return False
             
-    def king_in_check_knight(self, new_row, new_col):
+    def king_in_check_knight(self, new_row, new_col, king_row, king_col):
         if self.whites_move:
-            king_row, king_col = self.get_king_pos("black")
+            # king_row, king_col = self.get_king_pos("black")
             if abs(king_row - new_row) == 2 and abs(king_col - new_col) == 1:
                 self.black_in_check = True
                 return True
@@ -295,7 +294,7 @@ class Chess():
                 self.black_in_check = True
                 return True
         else:
-            king_row, king_col = self.get_king_pos("white")
+            # king_row, king_col = self.get_king_pos("white")
             if abs(king_row - new_row) == 2 and abs(king_col - new_col) == 1:
                 self.white_in_check = True
                 return True
@@ -304,9 +303,9 @@ class Chess():
                 return True
             return False
 
-    def king_in_check_rook(self, new_row, new_col):
+    def king_in_check_rook(self, new_row, new_col, king_row, king_col):
         if self.whites_move:
-            king_row, king_col = self.get_king_pos("black")
+            # king_row, king_col = self.get_king_pos("black")
             # rook and king on same rank
             if new_row == king_row:
                 start = min(king_col, new_col)+1
@@ -326,7 +325,7 @@ class Chess():
             return True  
 
         else:
-            king_row, king_col = self.get_king_pos("white")
+            # king_row, king_col = self.get_king_pos("white")
             if new_row == king_row:
                 start = min(king_col, new_col)+1
                 end = max(king_col, new_col)
@@ -344,32 +343,68 @@ class Chess():
             self.white_in_check = True
             return True 
 
-    def king_in_check_queen(self, new_row, new_col):
-        if self.king_in_check_bishop(new_row, new_col) or self.king_in_check_rook(new_row, new_col):
+    def king_in_check_queen(self, new_row, new_col, king_row, king_col):
+        if self.king_in_check_bishop(new_row, new_col, king_row, king_col) or self.king_in_check_rook(new_row, new_col, king_row, king_col):
             return True
         return False
 
-    def king_in_check(self, new_row, new_col, piece):
+    def king_in_check(self, new_row, new_col, king_row, king_col, piece):
         if "bishop" in piece:
-            if self.king_in_check_bishop(new_row, new_col):
+            if self.king_in_check_bishop(new_row, new_col, king_row, king_col):
                 return True
         if "pawn" in piece:
-            if self.king_in_check_pawn(new_row, new_col):
+            if self.king_in_check_pawn(new_row, new_col, king_row, king_col):
                 return True
         if "knight" in piece:
-            if self.king_in_check_knight(new_row, new_col):
+            if self.king_in_check_knight(new_row, new_col, king_row, king_col):
                 return True
         if "rook" in piece:
-            if self.king_in_check_rook(new_row, new_col):
+            if self.king_in_check_rook(new_row, new_col, king_row, king_col):
                 return True
         if "queen" in piece:
-            if self.king_in_check_queen(new_row, new_col):
+            if self.king_in_check_queen(new_row, new_col, king_row, king_col):
                 return True
         return False
         
+    def get_valid_moves_in_check(self, new_row, new_col):
+        possible_board = self.board.copy()
+        if self.whites_move:
+            possible_board[(new_row, new_col)] = "w_king"
+            # first check if the king can move out of check
+            for coord, piece in possible_board.items():
+                row, col = coord
+                if piece == "Empty" or piece[0] == "w":
+                    continue
+                if "pawn" in piece and self.king_in_check_pawn(row, col, new_row, new_col):
+                    return False
+                if "knight" in piece and self.king_in_check_knight(row, col, new_row, new_col):
+                    return False
+                if "bishop" in piece and self.king_in_check_bishop(row, col, new_row, new_col):
+                    return False
+                if "rook" in piece and self.king_in_check_rook(row, col, new_row, new_col):
+                    return False
+                if "queen" in piece and self.king_in_check_queen(row, col, new_row, new_col):
+                    return False
+        else:
+            possible_board[(new_row, new_col)] = "b_king"
+            # first check if the king can move out of check
+            for coord, piece in possible_board.items():
+                row, col = coord
+                if piece == "Empty" or piece[0] == "b":
+                    continue
+                if "pawn" in piece and self.king_in_check_pawn(row, col, new_row, new_col):
+                    return False
+                if "knight" in piece and self.king_in_check_knight(row, col, new_row, new_col):
+                    return False
+                if "bishop" in piece and self.king_in_check_bishop(row, col, new_row, new_col):
+                    return False
+                if "rook" in piece and self.king_in_check_rook(row, col, new_row, new_col):
+                    return False
+                if "queen" in piece and self.king_in_check_queen(row, col, new_row, new_col):
+                    return False
+        return True
+                    
 
-    def get_valid_moves_in_check(self):
-        pass
 
     def can_en_passant_capture(self, old_row, old_col, new_row, new_col):
         if self.whites_move:
@@ -527,10 +562,7 @@ class Chess():
     # MAKE SURE A MOVE IS VALID SEEING IF YOUR IN CHECK ALSO
 
     def check_valid_move(self, old_row, old_col, new_row, new_col, piece):
-        if self.whites_move and self.white_in_check:
-            self.get_valid_moves_in_check()
-        if not self.whites_move and self.black_in_check:
-            self.get_valid_moves_in_check()
+
         square_moved_to = self.board[(new_row, new_col)]
         if self.whites_move and square_moved_to[0] == 'w':
             return False
@@ -549,7 +581,6 @@ class Chess():
         if "king" in piece:
             return self.check_vald_king_move(old_row, old_col, new_row, new_col)
         return True
-
 
     def on_release(self, event):
         # Calculate the row and column of the destination square
@@ -570,9 +601,13 @@ class Chess():
                 self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
                 print(self.INVALID_MOVE_MSG)
                 return
-            if self.king_in_check(row, col, piece):
+            if self.white_in_check and not self.get_valid_moves_in_check(row, col):
+                self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
+                print("Cannot move there!")
+                return
+            king_row, king_col = self.get_king_pos("black")
+            if self.king_in_check(row, col, king_row, king_col, piece):
                 print(f"Black is in check from a {piece}!")
-            
             self.canvas.coords(self.current_piece_id, dest_x, dest_y)
             self.board[(old_row,old_col)] = "Empty"
             self.board[(row, col)] = self.current_piece
@@ -580,7 +615,6 @@ class Chess():
             self.capture_piece(row, col)
             self.is_en_passanted = False
             self.check_stale_mate_draw()
-            print(self.moves_made)
             self.whites_move = not self.whites_move   
         # Blacks move validation check
         else:
@@ -591,7 +625,12 @@ class Chess():
                 self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
                 print(self.INVALID_MOVE_MSG)
                 return
-            if self.king_in_check(row, col, piece):
+            if self.black_in_check and not self.get_valid_moves_in_check(row, col):
+                self.canvas.coords(self.current_piece_id, old_col*self.square_size+40, old_row*self.square_size+40)
+                print("Cannot move there!")
+                return
+            king_row, king_col = self.get_king_pos("white")
+            if self.king_in_check(row, col, king_row, king_col, piece):
                 print(f"White is in check from a {piece}!")
             self.canvas.coords(self.current_piece_id, dest_x, dest_y)
             self.board[(old_row,old_col)] = "Empty"
@@ -600,7 +639,6 @@ class Chess():
             self.capture_piece(row, col)
             self.is_en_passanted = False
             self.check_stale_mate_draw()
-            print(self.moves_made)
             self.whites_move = True
  
     def play(self):

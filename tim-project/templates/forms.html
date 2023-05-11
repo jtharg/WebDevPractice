@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Create Form</title>
+        <style>
+          label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+          }
+        </style>
+        <!-- <link type="text/css" rel="stylesheet" href="../static/createstyle.css"> -->
+        <script src= "https://fontawesome.com/kits/6d4a36eea1.js" crossorigin="anonymous"></script>
+    </head>
+    <body>
+      <br></br>
+      <div style="margin:auto;">
+      <h1 style="text-align: center; color: blue;;">Create an Event Form</h1>
+    </div>
+        <div style="margin:auto; width:50%; border: 1px solid blue; padding: 20px;">
+            <form method="post" action="/forms">
+              {% if error %}
+              <p><span style="color: red;" id="error">{{ error }}</span></p>
+              {% endif %}
+              {% if success %}
+              <p><span style="color: green;" id="success">{{ success | safe }}</span></p>
+              {% endif %}
+              <label for="type">Select Event Role:</label>
+              <select name="role" id="role">
+                <option value="event_management">Event Management</option>
+                <option value="event_participation">Event Participation</option>
+              </select>
+              <br><br>
+              <label for="name">Event Name:</label>
+              <input type="text" id="name" name="name"><br><br>
+              <label for="date">Event Date:</label>
+              <input type="date" id="date" name="date"><br><br>
+              <label for="manager">Event Manager:</label>
+              <input type="text" id="manager" name="manager"><br><br>
+              <label for="location">Event Location:</label>
+              <input type="text" id="location" name="location"><br><br>
+              <label for="additional_info">Additional Information:</label>
+              <textarea id="additional_info" name="additional_info" rows="4" cols="50"></textarea><br><br>
+              <input type="submit" value="Submit" style="display: block; margin: 0 auto;">
+            </form>
+          </div>
+    </body>
+</html>
+{% endblock %}
